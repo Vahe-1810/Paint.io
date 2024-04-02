@@ -1,0 +1,38 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+<mask id="mask0_332_4251" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="-134" y="0" width="1068" height="601">
+<rect x="-133.814" y="0.000244141" width="1067.63" height="600" fill="url(#paint0_radial_332_4251)"/>
+</mask>
+<g mask="url(#mask0_332_4251)">
+<g style="mix-blend-mode:overlay" opacity="0.6">
+<path d="M-8.34961 -38.708L7.29371 690.302" stroke="white" stroke-width="2.47423"/>
+<path d="M34.627 -38.3503L70.5032 689.944" stroke="white" stroke-width="2.47423"/>
+<path d="M92.5557 -38.6418L113.485 690.236" stroke="white" stroke-width="2.47423"/>
+<path d="M167.226 -38.7861L171.379 690.38" stroke="white" stroke-width="2.47423"/>
+<path d="M221.425 -38.584L246.054 690.178" stroke="white" stroke-width="2.47423"/>
+<path d="M284.629 -38.708L300.272 690.302" stroke="white" stroke-width="2.47423"/>
+<path d="M347.824 -38.708L363.468 690.302" stroke="white" stroke-width="2.47423"/>
+<path d="M390.8 -38.3503L426.676 689.944" stroke="white" stroke-width="2.47423"/>
+<path d="M448.729 -38.6418L469.658 690.236" stroke="white" stroke-width="2.47423"/>
+<path d="M523.399 -38.7861L527.553 690.38" stroke="white" stroke-width="2.47423"/>
+<path d="M577.598 -38.584L602.227 690.178" stroke="white" stroke-width="2.47423"/>
+<path d="M640.802 -38.708L656.445 690.302" stroke="white" stroke-width="2.47423"/>
+<path d="M703.997 -38.708L719.64 690.302" stroke="white" stroke-width="2.47423"/>
+<path d="M746.973 -38.3503L782.849 689.944" stroke="white" stroke-width="2.47423"/>
+<path d="M804.901 -38.6418L825.831 690.236" stroke="white" stroke-width="2.47423"/>
+<path d="M1991.89 30.3672L-389.627 0.115196" stroke="white" stroke-width="2.47423"/>
+<path d="M1991.86 73.3433L-389.588 109.219" stroke="white" stroke-width="2.47423"/>
+<path d="M1991.97 165.182L-389.705 152.202" stroke="white" stroke-width="2.47423"/>
+<path d="M1991.51 311.781L-389.24 244.006" stroke="white" stroke-width="2.47423"/>
+<path d="M1991.99 391.5L-389.723 390.609" stroke="white" stroke-width="2.47423"/>
+<path d="M1991.89 500.599L-389.627 470.347" stroke="white" stroke-width="2.47423"/>
+<path d="M1991.89 609.69L-389.627 579.438" stroke="white" stroke-width="2.47423"/>
+</g>
+</g>
+<defs>
+<radialGradient id="paint0_radial_332_4251" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(375.5 300) rotate(180) scale(355.5 379.149)">
+<stop stop-opacity="0"/>
+<stop offset="0.572917" stop-opacity="0.161458"/>
+<stop offset="1"/>
+</radialGradient>
+</defs>
+</svg>

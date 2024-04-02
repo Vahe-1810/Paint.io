@@ -1,0 +1,9 @@
+.tool-button {
+  width: 100px;
+  height: 100px;
+  background: #fff;
+  background-blend-mode: overlay;
+  box-shadow: 4px 4px 0px #000000;
+  border-radius: 8px;
+  cursor: pointer;
+}

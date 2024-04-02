@@ -1,0 +1,7 @@
+.layout {
+  height: 100%;
+  width: 75%;
+  padding: 50px;
+  background-image: url(../../assets/layout.svg);
+  background-size: cover;
+}
