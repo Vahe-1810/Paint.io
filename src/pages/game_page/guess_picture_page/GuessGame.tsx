@@ -1,5 +1,5 @@
-import Layout from "@/components/layout";
 import Canvas from "@/components/canvas";
+import Layout from "@/components/layout";
 
 function GuessGame() {
   return (
