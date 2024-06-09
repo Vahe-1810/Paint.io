@@ -1,4 +1,5 @@
 import { memo } from "react";
+
 import "./styles.css";
 
 type ToolButtonProps = React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement> & {

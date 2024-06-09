@@ -1,0 +1,30 @@
+.modal {
+  position: absolute;
+  width: 20%;
+  max-height: 30%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #00000050;
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 0 50px 5px #000;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  display: flex;
+  padding-inline: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  justify-content: space-between;
+}
+
+.item:hover {
+  background: #00000046;
+}

@@ -8,7 +8,9 @@
 .canvas {
   background: #fff;
   border-radius: 10px;
-  cursor: url(../../assets/pencil.svg) 6 24, pointer;
+  cursor:
+    url(../../assets/pencil.svg) 6 24,
+    pointer;
   border: 5px dashed black;
 }
 

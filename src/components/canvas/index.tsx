@@ -1,12 +1,17 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+
 import Bucket from "@/assets/bucket.svg?react";
+import bucketUrl from "@/assets/bucket.svg?url";
+import Clear from "@/assets/clear.svg?react";
 import Pencil from "@/assets/pencil.svg?react";
 import pencilUrl from "@/assets/pencil.svg?url";
-import bucketUrl from "@/assets/bucket.svg?url";
-import { IDrawingTools } from "@/types/types";
-import { COLORS, DRAW_SIZES } from "@/mocks";
 import { LINEAR_GRADIENT_MULTICOLOR } from "@/constants";
 import { rgbToHex } from "@/helpers/rgbToHex";
+import { COLORS, DRAW_SIZES } from "@/mocks";
+import { socket } from "@/socket";
+import { IDrawingTools } from "@/types/types";
+
 import ToolField from "../fields/tool";
 import "./styles.css";
 
@@ -22,18 +27,52 @@ const Canvas = (props: React.HTMLAttributes<HTMLCanvasElement>) => {
   const undoStack = useRef<string[]>([]).current;
   const redoStack = useRef<string[]>([]).current;
 
+  const { pathname } = useLocation();
+
   useEffect(() => {
     // initialization
+
+    // canvas
     const canvas = canvasRef.current;
     const ctx = (ctxRef.current = canvas!.getContext("2d", { willReadFrequently: true })!);
-
-    ctx.fillStyle = "#cbcbcb";
-    ctx.fillRect(0, 0, canvas!.width, canvas!.height);
 
     ctx.beginPath();
     ctx.strokeStyle = "#000000";
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
+
+    // socket io
+
+    if (!socket.connected) {
+      socket.connect();
+      socket.emit("join", pathname.split("/").at(-1));
+    }
+
+    socket.on("connect", () => {});
+
+    socket.on("joined", (_, url) => {
+      drawCanvasImage(url);
+    });
+
+    socket.on("draw-pencil", ({ px, py, cx, cy, color, width }) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      draw(px, py, cx, cy);
+    });
+
+    socket.on("draw-state", (url) => {
+      drawCanvasImage(url);
+    });
+
+    socket.on("clear", () => {
+      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
+      undoStack.length = 0;
+      redoStack.length = 0;
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -47,19 +86,29 @@ const Canvas = (props: React.HTMLAttributes<HTMLCanvasElement>) => {
     let isPressed = false;
 
     const handleStartDraw = (e: MouseEvent) => {
-      isPressed = true;
-      prevX = e.offsetX;
-      prevY = e.offsetY;
+      if (e.button === 0) {
+        isPressed = true;
+        prevX = e.offsetX;
+        prevY = e.offsetY;
 
-      ctx.lineWidth = currentLineWidth;
-      ctx.strokeStyle = currentColor;
+        ctx.lineWidth = currentLineWidth;
+        ctx.strokeStyle = currentColor;
 
-      tool === "pencil" && draw(e.offsetX, e.offsetY, e.offsetX, e.offsetY);
+        tool === "pencil" && draw(e.offsetX, e.offsetY, e.offsetX, e.offsetY);
+      }
     };
 
     const handleDraw = (e: MouseEvent) => {
       if (isPressed && !isMouseLeaved && tool !== "bucket") {
         draw(prevX, prevY, e.offsetX, e.offsetY);
+        socket.emit("draw-pencil", {
+          px: prevX,
+          py: prevY,
+          cx: e.offsetX,
+          cy: e.offsetY,
+          color: currentColor,
+          width: currentLineWidth,
+        });
         prevX = e.offsetX;
         prevY = e.offsetY;
       }
@@ -67,7 +116,9 @@ const Canvas = (props: React.HTMLAttributes<HTMLCanvasElement>) => {
 
     const handleMouseUp = (e: MouseEvent) => {
       isPressed = false;
-      if (e.target === canvas && tool === "pencil") handleSaveState();
+      if (e.target === canvas && tool === "pencil") {
+        handleSaveState();
+      }
     };
 
     const handleMouseLeave = (e: MouseEvent) => {
@@ -83,30 +134,20 @@ const Canvas = (props: React.HTMLAttributes<HTMLCanvasElement>) => {
     const handleUndoRedo = ({ code, ctrlKey }: KeyboardEvent) => {
       if (ctrlKey) {
         if (code === "KeyZ" && undoStack.length > 0) {
-          ctx.clearRect(0, 0, canvas!.width, canvas!.height);
           redoStack.push(undoStack.pop()!);
-          const stateSrc = undoStack.at(-1);
+          const stateSrc = undoStack.at(-1)!;
 
-          const img = new Image();
-
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0);
-          };
-          img.src = stateSrc as string;
+          drawCanvasImage(stateSrc);
+          socket.emit("draw-state", undoStack.at(-1));
           return;
         }
 
         if (code === "KeyY" && redoStack.length > 0) {
-          ctxRef.current!.clearRect(0, 0, canvas!.width, canvas!.height);
           const redoEl = redoStack.pop() as string;
           undoStack.push(redoEl);
 
-          const img = new Image();
-
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0);
-          };
-          img.src = redoEl;
+          drawCanvasImage(redoEl);
+          socket.emit("draw-state", undoStack.at(-1));
         }
       }
     };
@@ -127,51 +168,55 @@ const Canvas = (props: React.HTMLAttributes<HTMLCanvasElement>) => {
     };
 
     canvas?.addEventListener("mousedown", handleStartDraw);
-    window.addEventListener("mouseup", handleMouseUp);
     canvas?.addEventListener("mousemove", handleDraw);
     canvas?.addEventListener("mouseleave", handleMouseLeave);
     canvas?.addEventListener("mouseover", handleMouseOver);
     canvas?.addEventListener("click", handleClick);
+    window.addEventListener("mouseup", handleMouseUp);
     window.addEventListener("keydown", handleUndoRedo);
 
     return () => {
       canvas?.removeEventListener("mousedown", handleStartDraw);
-      window.removeEventListener("mouseup", handleMouseUp);
       canvas?.removeEventListener("mousemove", handleDraw);
       canvas?.removeEventListener("mouseleave", handleMouseLeave);
       canvas?.removeEventListener("mouseover", handleMouseOver);
       canvas?.removeEventListener("click", handleClick);
+      window.removeEventListener("mouseup", handleMouseUp);
       window.removeEventListener("keydown", handleUndoRedo);
     };
   }, [currentColor, currentLineWidth, tool]);
 
   const handleSaveState = () => {
-    undoStack.push(canvasRef.current!.toDataURL());
+    const savingUrl = canvasRef.current!.toDataURL();
+    undoStack.push(savingUrl);
     redoStack.length = 0;
+    socket.emit("draw-state", undoStack.at(-1));
   };
 
   const fillArea = (x: number, y: number, oldColor: string) => {
+    const ctx = ctxRef.current!;
     const stack = [{ x, y }];
     const visited = new Set();
-    const edges: { x: number; y: number; color: string }[] = [];
+    const edges: { x: number; y: number }[] = [];
     const fillSize = 2;
 
     while (stack.length > 0) {
       const { x, y } = stack.pop()!;
 
       const key = `${x},${y}`;
+
       if (visited.has(key)) continue;
       visited.add(key);
 
-      const [r, g, b] = ctxRef.current!.getImageData(x, y, fillSize, fillSize).data;
+      const [r, g, b] = ctx.getImageData(x, y, fillSize, fillSize).data;
       const hex = rgbToHex(r, g, b);
 
       if (hex !== oldColor) {
-        edges.push({ x, y, color: currentColor });
+        edges.push({ x, y });
         continue;
       }
 
-      ctxRef.current!.fillRect(x, y, fillSize, fillSize);
+      ctx.fillRect(x, y, fillSize, fillSize);
 
       stack.push({ x: x + fillSize, y: y + fillSize });
       stack.push({ x: x, y: y + fillSize });
@@ -183,14 +228,12 @@ const Canvas = (props: React.HTMLAttributes<HTMLCanvasElement>) => {
       stack.push({ x: x + fillSize, y: y });
     }
 
-    ctxRef.current!.moveTo(edges[0].x, edges[0].y);
-    edges.forEach(({ x, y, color }) => {
-      ctxRef.current!.beginPath();
-      ctxRef.current!.lineWidth = 6;
-      ctxRef.current!.strokeStyle = color;
-      ctxRef.current!.lineTo(x, y);
-      ctxRef.current!.stroke();
-      ctxRef.current!.closePath();
+    ctx.moveTo(edges[0].x, edges[0].y);
+    edges.forEach(({ x, y }) => {
+      ctx.beginPath();
+      ctx.lineWidth = 6;
+      ctx.lineTo(x, y);
+      ctx.stroke();
     });
   };
 
@@ -203,6 +246,18 @@ const Canvas = (props: React.HTMLAttributes<HTMLCanvasElement>) => {
     ctx.stroke();
   };
 
+  const drawCanvasImage = (url: string) => {
+    if (canvasRef.current) {
+      ctxRef.current!.clearRect(0, 0, canvasRef.current?.width, canvasRef.current!.height);
+      const img = new Image();
+
+      img.onload = () => {
+        ctxRef.current!.drawImage(img, 0, 0);
+      };
+      img.src = url;
+    }
+  };
+
   const handleChangeColor = (color: string) => {
     setCurrentColor(color);
   };
@@ -211,10 +266,17 @@ const Canvas = (props: React.HTMLAttributes<HTMLCanvasElement>) => {
     setCurrentLineWidth(width);
   };
 
+  const handleClear = () => {
+    redoStack.length = 0;
+    undoStack.length = 0;
+    socket.emit("clear", "");
+  };
+
   return (
     <div className="root">
       <div className="drawing-tools">
         <div className="drawing-box-main">
+          <Clear onClick={handleClear} cursor="pointer" />
           <Bucket
             cursor="pointer"
             onClick={() => {

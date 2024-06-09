@@ -1,7 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
+
+import GuessGame from "../pages/game_page/guess_picture_page/GuessGame";
 import MainMenuPage from "../pages/main_menu_page/MainMenuPage";
 import Root from "../pages/root_page/Root";
-import GuessGame from "../pages/game_page/guess_picture_page/GuessGame";
 
 const router = createBrowserRouter([
   {
@@ -13,7 +14,7 @@ const router = createBrowserRouter([
     element: <MainMenuPage />,
   },
   {
-    path: "guess-game",
+    path: "guess-game/:roomId",
     element: <GuessGame />,
   },
 ]);
